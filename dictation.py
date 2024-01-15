@@ -19,7 +19,7 @@ controller = pynput.keyboard.Controller()
 
 # %% parse args
 engine = sys.argv[1]
-language = sys.argv[2] if len(sys.argv) > 2 else "en"
+language = sys.argv[2] if len(sys.argv) > 2 else None
 # note: supplying language improves accuracy and latency
 
 # %% local or remote
@@ -119,6 +119,8 @@ def on_release(key):
 
 
 # %%
+if language is not None:
+    print(f"Using language: {language}")
 with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
     print(f"Press {rec_key} to start recording")
     try:

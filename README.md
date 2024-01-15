@@ -36,18 +36,18 @@ Where `sk-...` is your OpenAI API token.
 ## Running
 
 ```
-bash run_dictation_local.sh
+bash run_dictation_local.sh en
 ```
 or to run remotely:
 ```
-bash run_dictation_remote.sh
+bash run_dictation_remote.sh en
 ```
 
 Ctrl-c to stop.
 
 By default the record key is *right* ctrl. You can change it in `dictation.py`, but it must be a modifier key (shift, alt, ...).
 
-You can also set the default language there.
+Last argument (here `en`), sets the language. You can not pass any language to detect it automatically, but that can have worse latency and accuracy.
 
 ## Other approaches
 
@@ -58,5 +58,5 @@ With some clever engineering and a lot of compute maybe we could get that time l
 
 # TODO
 
-- [ ] pass languages to bash
+- [x] pass languages to bash
 - [ ] incremenal transcription? but no moving window, just larger and larger windows
