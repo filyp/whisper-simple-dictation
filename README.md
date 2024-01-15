@@ -71,7 +71,7 @@ There's also [whisper-writer](https://github.com/savbell/whisper-writer), which 
 # TODO
 
 - [ ] test if prompting works ok locally
-- [ ] incremenal transcription? but no moving window, just larger and larger windows
+- [ ] incremenal transcription? but no moving window, just larger and larger windows. but that makes sense only with local, and even then it may be so slow that the lag is confusing. it also complicates a lot of things
 - [x] pass languages to bash
 - [x] get context
 - [x] maybe use clipboard pasting to pasty any special chars, as the last resort
