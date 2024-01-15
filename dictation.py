@@ -1,13 +1,14 @@
 # %%
 # import os
 # os.environ['LD_LIBRARY_PATH'] = "/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cublas/lib:/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cudnn/lib"
+import argparse
 import sys
 import threading
 import time
-import subprocess
 
 import numpy as np
 import pynput
+import pyperclip
 import sounddevice as sd
 
 # ! tweak these values
@@ -17,28 +18,24 @@ whisper_samplerate = 16000  # sampling rate that whisper uses
 recording_samplerate = 48000  # multiple of whisper_samplerate, widely supported
 
 # %% choose typing method
-ydotool_is_installed = (
-    subprocess.run(["ydotool"], stdout=subprocess.DEVNULL).returncode == 0
-)
-ydotool_is_installed = False
-if ydotool_is_installed:
-    print("Using ydotool for typing")
-else:
-    controller = pynput.keyboard.Controller()
-    print("Using pynput for typing")
+controller = pynput.keyboard.Controller()
 
 # %% parse args
-engine = sys.argv[1]
-language = sys.argv[2] if len(sys.argv) > 2 else None
-# note: supplying language improves accuracy and latency
+parser = argparse.ArgumentParser()
+parser.add_argument("engine", choices=["local", "remote"])
+parser.add_argument("language", nargs="?", default=None)
+parser.add_argument("--no-grab-context", action="store_true")
+parser.add_argument("--no-type-using-clipboard", action="store_true")
+parser.add_argument("--context-limit-chars", type=int, default=500)
+args = parser.parse_args()
 
 # %% local or remote
-if engine == "local":
+if args.engine == "local":
     from faster_whisper import WhisperModel
 
     model = WhisperModel("large-v3", device="cuda", compute_type="float16")
     # int8 is said to have worse accuracy and be slower
-elif engine == "remote":
+elif args.engine == "remote":
     import soundfile
     from openai import OpenAI
 
@@ -48,24 +45,55 @@ else:
 
 
 # %%
-def get_text_local(audio):
-    segments, info = model.transcribe(audio, beam_size=5, language=language)
+def get_text_local(audio, context=None):
+    segments, info = model.transcribe(
+        audio, beam_size=5, language=args.language, initial_prompt=context
+    )
     segments = list(segments)
     text = " ".join([segment.text.strip() for segment in segments])
     return text
 
 
-def get_text_remote(audio):
+def get_text_remote(audio, context=None):
     tmp_audio_filename = "tmp.wav"
     soundfile.write(tmp_audio_filename, audio, whisper_samplerate, format="wav")
     # print(time.time())
     api_response = client.audio.transcriptions.create(
         model="whisper-1",
         file=open(tmp_audio_filename, "rb"),
-        language=language,
+        language=args.language,
+        prompt=context,
     )
     # print(time.time())
     return api_response.text
+
+
+def get_context():
+    # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
+    controller.press(pynput.keyboard.Key.ctrl_l)
+    controller.press(pynput.keyboard.Key.shift_l)
+    controller.press(pynput.keyboard.Key.home)
+    controller.release(pynput.keyboard.Key.home)
+    controller.release(pynput.keyboard.Key.shift_l)
+    controller.release(pynput.keyboard.Key.ctrl_l)
+
+    controller.press(pynput.keyboard.Key.ctrl_l)
+    controller.press("c")
+    controller.release("c")
+    controller.release(pynput.keyboard.Key.ctrl_l)
+
+    controller.press(pynput.keyboard.Key.right)
+    controller.release(pynput.keyboard.Key.right)
+
+    return pyperclip.paste()
+
+
+def type_using_clipboard(text):
+    pyperclip.copy(text)
+    controller.press(pynput.keyboard.Key.ctrl_l)
+    controller.press("v")
+    controller.release("v")
+    controller.release(pynput.keyboard.Key.ctrl_l)
 
 
 # %%
@@ -93,7 +121,6 @@ def record_and_process():
         time.sleep(0.005)
     stream.stop()
     stream.close()
-
     recorded_audio = np.concatenate(audio_chunks)[:, 0]
 
     # ! downsample
@@ -101,19 +128,28 @@ def record_and_process():
     # leave in only every 3rd sample, using numpy
     recorded_audio = recorded_audio[::3]
 
+    # ! get context
+    if not args.no_grab_context:
+        context = get_context()
+        # limit the length of context
+        context = context[-args.context_limit_chars :]
+    else:
+        context = None
+    # print(context)
+
     # ! transcribe
-    if engine == "local":
-        text = get_text_local(recorded_audio)
-    elif engine == "remote":
-        text = get_text_remote(recorded_audio)
+    if args.engine == "local":
+        text = get_text_local(recorded_audio, context)
+    elif args.engine == "remote":
+        text = get_text_remote(recorded_audio, context)
     print(text)
 
     # ! type that text
-    text = text + " "
-    if ydotool_is_installed:
-        subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text])
+    if not args.no_type_using_clipboard:
+        type_using_clipboard(text)
     else:
         controller.type(text)
+    controller.type(" ")
 
 
 def on_press(key):
@@ -133,25 +169,11 @@ def on_release(key):
 
 
 # %%
-if language is not None:
-    print(f"Using language: {language}")
+if args.language is not None:
+    print(f"Using language: {args.language}")
 with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
     print(f"Press {rec_key} to start recording")
     try:
         listener.join()
     except KeyboardInterrupt:
         print("\nExiting...")
-
-
-# %%
-# sd.play(recorded_audio, recording_samplerate)
-
-
-# from pynput.keyboard import KeyCode
-
-
-# controller = pynput.keyboard.Controller()
-# controller.press(KeyCode.from_char('\u0105'))
-# controller.release(KeyCode.from_char('\u0105'))
-
-# %%

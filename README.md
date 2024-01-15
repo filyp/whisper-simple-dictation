@@ -47,9 +47,18 @@ Ctrl-c to stop.
 
 By default the record key is *right* ctrl. You can change it in `dictation.py`, but it must be a modifier key (shift, alt, ...).
 
-Last argument (here `en`), sets the language. You can not pass any language to detect it automatically, but that can have worse latency and accuracy.
+## Options
 
-For languages with special chars like ó, д, etc. you'll also need to install ydotool to have them typed. (Although there are cases where ydotool also fails.)
+- **Language.** First argument (in the example above `en`), sets the language. You can also not pass any language to detect it automatically, but that can have worse latency and accuracy.
+- **Disabling the usage of context.** Normally, the context is grabbed by sending keypresses: `ctrl+shift+home, ctrl+c, right`. This context is passed to Whisper to improve accuracy. To disable this, pass `--no-grab-context` flag.
+- **Typing with simulated keypresses**. Normally, to type, we copy the text to clipboard, and then send `ctrl+v`. Pass `--no-type-using-clipboard` to instead of that use pynput to type the text with simulated keypresses. Note that this won't support some unicode chars like ó, л, etc. 
+
+
+So if you want to f.e. dictate in terminal, and these ctrl+... keypresses would break stuff, you can run:
+```
+bash run_dictation_local.sh en --no-grab-context --no-type-using-clipboard
+```
+
 
 ## Other approaches
 
@@ -62,6 +71,9 @@ There's also [whisper-writer](https://github.com/savbell/whisper-writer), which 
 # TODO
 
 - [x] pass languages to bash
-- [ ] get context with some accesibility tools
+- [x] get context
 - [ ] incremenal transcription? but no moving window, just larger and larger windows
-- [ ] maybe use clipboard pasting to pasty any special chars, as the last resort
+- [x] maybe use clipboard pasting to pasty any special chars, as the last resort
+- [ ] test if prompting works ok locally
+- [x] pass all the possible options as args
+- [x] document options
