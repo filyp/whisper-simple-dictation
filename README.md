@@ -49,6 +49,8 @@ By default the record key is *right* ctrl. You can change it in `dictation.py`, 
 
 Last argument (here `en`), sets the language. You can not pass any language to detect it automatically, but that can have worse latency and accuracy.
 
+For languages with special chars like ó, д, etc. you'll also need to install ydotool to have them typed. (Although there are cases where ydotool also fails.)
+
 ## Other approaches
 
 At first I wanted real-time dictation, similar to [nerd-dictation](https://github.com/ideasman42/nerd-dictation). There's [whisper_streaming](https://github.com/ufal/whisper_streaming) which implements something similar, a continuous transcription using whisper. But it has a 3.3 second time lag, and because it needs to run whisper on many overlapping time windows, it's more compute heavy. Also those transcribed time windows are sometimes merged incorrectly. It may be enough for creating captions, but not really for dictation.
@@ -59,4 +61,6 @@ With some clever engineering and a lot of compute maybe we could get that time l
 # TODO
 
 - [x] pass languages to bash
+- [ ] get context with some accesibility tools
 - [ ] incremenal transcription? but no moving window, just larger and larger windows
+- [ ] maybe use clipboard pasting to pasty any special chars, as the last resort

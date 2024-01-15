@@ -58,13 +58,13 @@ def get_text_local(audio):
 def get_text_remote(audio):
     tmp_audio_filename = "tmp.wav"
     soundfile.write(tmp_audio_filename, audio, whisper_samplerate, format="wav")
-    print(time.time())
+    # print(time.time())
     api_response = client.audio.transcriptions.create(
         model="whisper-1",
         file=open(tmp_audio_filename, "rb"),
         language=language,
     )
-    print(time.time())
+    # print(time.time())
     return api_response.text
 
 
