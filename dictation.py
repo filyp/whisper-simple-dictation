@@ -11,13 +11,12 @@ import pynput
 import pyperclip
 import sounddevice as sd
 
-# ! tweak these values
+# ! you can change this rec_key value
 rec_key = pynput.keyboard.Key.ctrl_r
 
 whisper_samplerate = 16000  # sampling rate that whisper uses
 recording_samplerate = 48000  # multiple of whisper_samplerate, widely supported
 
-# %% choose typing method
 controller = pynput.keyboard.Controller()
 
 # %% parse args

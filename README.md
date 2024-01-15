@@ -70,10 +70,10 @@ There's also [whisper-writer](https://github.com/savbell/whisper-writer), which 
 
 # TODO
 
+- [ ] test if prompting works ok locally
+- [ ] incremenal transcription? but no moving window, just larger and larger windows
 - [x] pass languages to bash
 - [x] get context
-- [ ] incremenal transcription? but no moving window, just larger and larger windows
 - [x] maybe use clipboard pasting to pasty any special chars, as the last resort
-- [ ] test if prompting works ok locally
 - [x] pass all the possible options as args
 - [x] document options
