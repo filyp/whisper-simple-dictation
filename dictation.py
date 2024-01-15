@@ -4,6 +4,7 @@
 import sys
 import threading
 import time
+import subprocess
 
 import numpy as np
 import pynput
@@ -15,7 +16,16 @@ rec_key = pynput.keyboard.Key.ctrl_r
 whisper_samplerate = 16000  # sampling rate that whisper uses
 recording_samplerate = 48000  # multiple of whisper_samplerate, widely supported
 
-controller = pynput.keyboard.Controller()
+# %% choose typing method
+ydotool_is_installed = (
+    subprocess.run(["ydotool"], stdout=subprocess.DEVNULL).returncode == 0
+)
+ydotool_is_installed = False
+if ydotool_is_installed:
+    print("Using ydotool for typing")
+else:
+    controller = pynput.keyboard.Controller()
+    print("Using pynput for typing")
 
 # %% parse args
 engine = sys.argv[1]
@@ -99,7 +109,11 @@ def record_and_process():
     print(text)
 
     # ! type that text
-    controller.type(text + " ")
+    text = text + " "
+    if ydotool_is_installed:
+        subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text])
+    else:
+        controller.type(text)
 
 
 def on_press(key):
@@ -131,3 +145,13 @@ with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as liste
 
 # %%
 # sd.play(recorded_audio, recording_samplerate)
+
+
+# from pynput.keyboard import KeyCode
+
+
+# controller = pynput.keyboard.Controller()
+# controller.press(KeyCode.from_char('\u0105'))
+# controller.release(KeyCode.from_char('\u0105'))
+
+# %%
