@@ -1,0 +1,6 @@
+openai
+numpy
+soundfile
+# keyboard and sound support
+pynput
+sounddevice
