@@ -51,7 +51,7 @@ By default the record key is *right* ctrl. You can change it in `dictation.py`, 
 
 - **Language.** First argument (in the example above `en`), sets the language. You can also not pass any language to detect it automatically, but that can have worse latency and accuracy.
 - **Disabling the usage of context.** Normally, the context is grabbed by sending keypresses: `ctrl+shift+home, ctrl+c, right`. This context is passed to Whisper to improve accuracy. To disable this, pass `--no-grab-context` flag.
-- **Typing with simulated keypresses**. Normally, to type, we copy the text to clipboard, and then send `ctrl+v`. Pass `--no-type-using-clipboard` to instead of that use pynput to type the text with simulated keypresses. Note that this won't support some unicode chars like ó, л, etc. 
+- **Typing with simulated keypresses**. Normally, to type, we copy the text to clipboard, and then send `ctrl+shift+v`. Pass `--no-type-using-clipboard` to instead of that use pynput to type the text with simulated keypresses. Note that this won't support some unicode chars like ó, л, etc. 
 
 
 So if you want to f.e. dictate in terminal, and these ctrl+... keypresses would break stuff, you can run:
@@ -76,10 +76,6 @@ For compatibility with vim, I recommend adding to your .vimrc:
 inoremap <C-S-Home> <Esc>mwyH`w<Left>
 nnoremap <C-S-Home> mwyH`w<Left>
 nnoremap <C-c> <Nop>
-" compatibility with pasting of whisper-simple-dictation
-nnoremap <C-v> p
-nnoremap <C-b> <C-v>
-" b as in block-selection, but you can choose some other mapping
 ```
 
 # TODO

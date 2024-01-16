@@ -95,10 +95,13 @@ def get_context():
 
 
 def type_using_clipboard(text):
+    # use pynput to type ctrl+shift+v
     pyperclip.copy(text)
     controller.press(pynput.keyboard.Key.ctrl_l)
+    controller.press(pynput.keyboard.Key.shift_l)
     controller.press("v")
     controller.release("v")
+    controller.release(pynput.keyboard.Key.shift_l)
     controller.release(pynput.keyboard.Key.ctrl_l)
 
 
