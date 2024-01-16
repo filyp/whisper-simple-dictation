@@ -70,22 +70,28 @@ def get_text_remote(audio, context=None):
 
 def get_context():
     # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
+    # fisrt clear the clipboard in case getting context fails
+    pyperclip.copy("")
+    # ctrl+shift+home
     controller.press(pynput.keyboard.Key.ctrl_l)
     controller.press(pynput.keyboard.Key.shift_l)
     controller.press(pynput.keyboard.Key.home)
     controller.release(pynput.keyboard.Key.home)
     controller.release(pynput.keyboard.Key.shift_l)
     controller.release(pynput.keyboard.Key.ctrl_l)
-
+    # ctrl+c
     controller.press(pynput.keyboard.Key.ctrl_l)
     controller.press("c")
     controller.release("c")
     controller.release(pynput.keyboard.Key.ctrl_l)
-
+    # right arrow
     controller.press(pynput.keyboard.Key.right)
     controller.release(pynput.keyboard.Key.right)
-
-    return pyperclip.paste()
+    # get clipboard
+    clipboard = pyperclip.paste()
+    if clipboard == "":
+        print("Warning: context is empty")
+    return clipboard
 
 
 def type_using_clipboard(text):
