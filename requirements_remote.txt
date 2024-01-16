@@ -6,5 +6,3 @@ pynput
 sounddevice
 # grab input box contents
 pyperclip
-# other
-python-xlib
