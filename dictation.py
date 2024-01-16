@@ -2,6 +2,7 @@
 # import os
 # os.environ['LD_LIBRARY_PATH'] = "/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cublas/lib:/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cudnn/lib"
 import argparse
+import subprocess
 import sys
 import threading
 import time
@@ -25,7 +26,7 @@ parser.add_argument("engine", choices=["local", "remote"])
 parser.add_argument("language", nargs="?", default=None)
 parser.add_argument("--no-grab-context", action="store_true")
 parser.add_argument("--no-type-using-clipboard", action="store_true")
-parser.add_argument("--context-limit-chars", type=int, default=500)
+parser.add_argument("--context-limit-chars", type=int, default=300)
 args = parser.parse_args()
 
 # %% local or remote
@@ -121,6 +122,12 @@ def record_and_process():
     stream.stop()
     stream.close()
     recorded_audio = np.concatenate(audio_chunks)[:, 0]
+    
+    # ! check if not too short
+    duration = len(recorded_audio) / recording_samplerate
+    if duration <= 0.1:
+        print("Recording too short, skipping")
+        return
 
     # ! downsample
     # scipy resampling was much too slow (hundreds of ms)
@@ -144,15 +151,18 @@ def record_and_process():
     print(text)
 
     # ! type that text
+    text = text + " "
     if not args.no_type_using_clipboard:
         type_using_clipboard(text)
     else:
         controller.type(text)
-    controller.type(" ")
+        # subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text])
+        # note: ydotool on x11 correctly outputs polish chars and types in terminal
 
 
 def on_press(key):
     global rec_key_pressed
+    # print("pressed", key)
     if key == rec_key:
         rec_key_pressed = True
 
@@ -163,6 +173,7 @@ def on_press(key):
 
 def on_release(key):
     global rec_key_pressed
+    # print("released", key)
     if key == rec_key:
         rec_key_pressed = False
 
@@ -176,3 +187,16 @@ with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as liste
         listener.join()
     except KeyboardInterrupt:
         print("\nExiting...")
+
+# %% play around with getting window titles
+# # requires pip install python-xlib and I think xorg stuff
+# # on wayland it fails for many windows (f.e. terminal, dolphin)
+# # on x11 it works
+# from Xlib import display
+
+
+# def get_window_class():
+#     d = display.Display()
+#     window_id = d.get_input_focus().focus.id
+#     window = d.create_resource_object("window", window_id)
+#     return window.get_wm_class()[0]

@@ -68,12 +68,35 @@ With some clever engineering and a lot of compute maybe we could get that time l
 
 There's also [whisper-writer](https://github.com/savbell/whisper-writer), which is more mature, but doesn't (as of Jan 2024) have push-to-talk, which I find more pleasant to use.
 
+## Tips
+
+For compatibility with vim, I recommend adding to your .vimrc:
+```
+" compatibility with context grabbing of whisper-simple-dictation
+inoremap <C-S-Home> <Esc>mwyH`w<Left>
+nnoremap <C-S-Home> mwyH`w<Left>
+nnoremap <C-c> <Nop>
+" compatibility with pasting of whisper-simple-dictation
+nnoremap <C-v> p
+nnoremap <C-b> <C-v>
+" b as in block-selection, but you can choose some other mapping
+```
+
 # TODO
 
 - [ ] test if prompting works ok locally
-- [ ] grabbing context everywhere except some list of windows?
+- [ ] test if no lang actually increases latency/accuracy that much - it's useful to leave it blank
+- [ ] maybe trigger with some key combo, but then still wait for the release of modifier to stop recording - in that case, I'd like to factor out the keyhandling class
 ---
-- [ ] incremenal transcription? but no moving window, just larger and larger windows. but that makes sense only with local, and even then it may be so slow that the lag is confusing. it also complicates a lot of things
+probably won't do
+- grabbing context everywhere except some list of windows? - not very reliable, a lot of tinkering, platform specific, and not even that useful?
+    - now only terminal doesn't work
+    - in vscode, I just disabled C-S-Home; Now I can dictate, but context won't be grabbed. 
+- incremenal transcription? but no moving window, just larger and larger windows. but that makes sense only with local, and even then it may be so slow that the lag is confusing. it also complicates a lot of things
+- on wayland, pynput doesn't detect ctrl_r (or any other keypresses) when in terminal (tested on manjaro plasma)
+---
+- [x] guard against too short audio - min length is 0.1 s
+- [x] additional space is typed, but should be clipped (f.e. for vim compatibility with pasting in normal mode)
 - [x] pass languages to bash
 - [x] get context
 - [x] maybe use clipboard pasting to pasty any special chars, as the last resort
