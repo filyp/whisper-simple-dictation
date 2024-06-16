@@ -3,7 +3,6 @@
 # os.environ['LD_LIBRARY_PATH'] = "/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cublas/lib:/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cudnn/lib"
 import argparse
 import subprocess
-import sys
 import threading
 import time
 
@@ -27,6 +26,10 @@ parser.add_argument("language", nargs="?", default=None)
 parser.add_argument("--no-grab-context", action="store_true")
 parser.add_argument("--no-type-using-clipboard", action="store_true")
 parser.add_argument("--context-limit-chars", type=int, default=300)
+# add a command to be run on after model load
+parser.add_argument("--on-callback", type=str, default=None)
+# turn off automatically after some time
+parser.add_argument("--auto-off-time", type=int, default=None)
 args = parser.parse_args()
 
 # %% local or remote
@@ -42,6 +45,9 @@ elif args.engine == "remote":
     client = OpenAI()
 else:
     raise ValueError("Specify whether to use local or remote engine")
+
+if args.on_callback is not None:
+    subprocess.run(args.on_callback, shell=True)
 
 
 # %%
@@ -107,6 +113,7 @@ def type_using_clipboard(text):
 
 # %%
 rec_key_pressed = False
+time_last_used = time.time()
 
 
 def record_and_process():
@@ -131,7 +138,7 @@ def record_and_process():
     stream.stop()
     stream.close()
     recorded_audio = np.concatenate(audio_chunks)[:, 0]
-    
+
     # ! check if not too short
     duration = len(recorded_audio) / recording_samplerate
     if duration <= 0.1:
@@ -181,10 +188,11 @@ def on_press(key):
 
 
 def on_release(key):
-    global rec_key_pressed
+    global rec_key_pressed, time_last_used
     # print("released", key)
     if key == rec_key:
         rec_key_pressed = False
+        time_last_used = time.time()
 
 
 # %%
@@ -193,7 +201,12 @@ if args.language is not None:
 with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
     print(f"Press {rec_key} to start recording")
     try:
-        listener.join()
+        # listener.join()
+        while listener.is_alive():
+            if args.auto_off_time is not None and time.time() - time_last_used > args.auto_off_time:
+                print("Auto off")
+                break
+            time.sleep(1)
     except KeyboardInterrupt:
         print("\nExiting...")
 
