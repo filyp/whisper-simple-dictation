@@ -1,7 +1,7 @@
 faster-whisper
-# for faster-whisper, requiring cuda 11
-nvidia-cublas-cu11
-nvidia-cudnn-cu11
+# for faster-whisper, requiring cuda 12
+nvidia-cublas-cu12
+nvidia-cudnn-cu12~=8.9
 # keyboard and sound support
 pynput
 sounddevice
