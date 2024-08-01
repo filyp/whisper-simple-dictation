@@ -1,12 +1,14 @@
+import sys
 import numpy as np
 from flask import Flask, request, jsonify
 from faster_whisper import WhisperModel
 
 app = Flask(__name__)
 
-# model = WhisperModel("small", device="cuda", compute_type="float16")
-model = WhisperModel("medium", device="cuda", compute_type="float16")
-# model = WhisperModel("large-v3", device="cuda", compute_type="float16")
+model_name = sys.argv[1]
+print(f"Using model: {model_name}")
+
+model = WhisperModel(model_name, device="cuda", compute_type="float16")
 
 
 def get_text_local(audio, context=None):

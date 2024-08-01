@@ -36,11 +36,13 @@ parser.add_argument("--on-callback", type=str, default=None)
 parser.add_argument("--off-callback", type=str, default=None)
 # turn off automatically after some time
 parser.add_argument("--auto-off-time", type=int, default=None)
+# add a command to be run on after model load
+parser.add_argument("--model", type=str, default="large-v3")
 args = parser.parse_args()
 
 
 # start a server process
-engine = subprocess.Popen(["python", "engine.py"])
+engine = subprocess.Popen(["python", "engine.py", args.model])
 if args.on_callback is not None:
     subprocess.run(args.on_callback, shell=True)
 
@@ -97,7 +99,7 @@ def record_and_process():
     if engine.poll() is not None:
         # clean up the old process
         print("Starting engine")
-        engine = subprocess.Popen(["python", "engine.py"])
+        engine = subprocess.Popen(["python", "engine.py", args.model])
         if args.on_callback is not None:
             subprocess.run(args.on_callback, shell=True)
 
@@ -218,4 +220,6 @@ with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as liste
 
             time.sleep(1)
     except KeyboardInterrupt:
+        if args.off_callback is not None:
+            subprocess.run(args.off_callback, shell=True)
         print("\nExiting...")

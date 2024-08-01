@@ -52,6 +52,7 @@ By default the record key is *right* ctrl. You can change it in `dictation.py`, 
 - **Language.** First argument (in the example above `en`), sets the language. You can also not pass any language to detect it automatically, but that can have worse latency and accuracy.
 - **Disabling the usage of context.** Normally, the context is grabbed by sending keypresses: `ctrl+shift+home, ctrl+c, right`. This context is passed to Whisper to improve accuracy. To disable this, pass `--no-grab-context` flag.
 - **Typing with simulated keypresses**. Normally, to type, we copy the text to clipboard, and then send `ctrl+shift+v`. Pass `--no-type-using-clipboard` to instead of that use pynput to type the text with simulated keypresses. Note that this won't support some unicode chars like ó, л, etc. 
+- **Choosing model** Default is `large-v3`. You can also pass e.g. `--model medium` or `--model small`.
 
 
 So if you want to f.e. dictate in terminal, and these ctrl+... keypresses would break stuff, you can run:

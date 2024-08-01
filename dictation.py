@@ -30,13 +30,15 @@ parser.add_argument("--context-limit-chars", type=int, default=300)
 parser.add_argument("--on-callback", type=str, default=None)
 # turn off automatically after some time
 parser.add_argument("--auto-off-time", type=int, default=None)
+# add a command to be run on after model load
+parser.add_argument("--model", type=str, default="large-v3")
 args = parser.parse_args()
 
 # %% local or remote
 if args.engine == "local":
     from faster_whisper import WhisperModel
 
-    model = WhisperModel("large-v3", device="cuda", compute_type="float16")
+    model = WhisperModel(args.model, device="cuda", compute_type="float16")
     # int8 is said to have worse accuracy and be slower
 elif args.engine == "remote":
     import soundfile
