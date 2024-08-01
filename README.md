@@ -36,7 +36,7 @@ Where `sk-...` is your OpenAI API token.
 ## Running
 
 ```
-bash run_dictation_local.sh en
+bash run_dictation_auto_off.sh en
 ```
 or to run remotely:
 ```

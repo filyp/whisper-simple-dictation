@@ -4,3 +4,4 @@ venv
 junk
 .env
 tmp.wav
+__pycache__
