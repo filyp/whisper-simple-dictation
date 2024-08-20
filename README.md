@@ -64,6 +64,12 @@ To set up a service that will run whisper-simple-dictation, take a look at `exam
 - **Language.** First argument (in the example above `en`), sets the language. You can also not pass any language to detect it automatically, but that can have worse latency and accuracy.
 - **Choosing model** Default is `large-v3`. You can also pass e.g. `--model medium` or `--model small`.
 
+## Other systems
+
+In case of local running `dictation_auto_off.py` uses evdev which only works on Linux. For Windows and Mac you can try `_lagacy_dictation_auto_off_pynput.py`, which uses pynput. (Modify `run_dictation_auto_off.sh`.)
+
+If running remotely, `dictation_remote.py` uses pynput, so it should work on all systems (except for Linux with Wayland - evdev is needed for that, and that's not implemented).
+
 ## Other approaches
 
 At first I wanted real-time dictation, similar to [nerd-dictation](https://github.com/ideasman42/nerd-dictation). There's [whisper_streaming](https://github.com/ufal/whisper_streaming) which implements something similar, a continuous transcription using whisper. But it has a 3.3 second time lag, and because it needs to run whisper on many overlapping time windows, it's more compute heavy. Also those transcribed time windows are sometimes merged incorrectly. It may be enough for creating captions, but not really for dictation.
