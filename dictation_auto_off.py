@@ -80,6 +80,7 @@ engine = subprocess.Popen(["echo", "mock engine"])
 def type_using_clipboard(text):
     pyperclip.copy(text)
     # use evdev to type ctrl+shift+v
+    time.sleep(0.01)
     writer.write(e.EV_KEY, e.KEY_LEFTCTRL, 1)
     writer.write(e.EV_KEY, e.KEY_LEFTSHIFT, 1)
     writer.write(e.EV_KEY, e.KEY_V, 1)
