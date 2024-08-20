@@ -3,7 +3,7 @@ faster-whisper
 nvidia-cublas-cu12
 nvidia-cudnn-cu12~=8.9
 # keyboard and sound support
-pynput
+evdev
 sounddevice
 # grab input box contents
 pyperclip

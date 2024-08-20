@@ -23,7 +23,6 @@ controller = pynput.keyboard.Controller()
 parser = argparse.ArgumentParser()
 parser.add_argument("engine", choices=["local", "remote"])
 parser.add_argument("language", nargs="?", default=None)
-parser.add_argument("--no-grab-context", action="store_true")
 parser.add_argument("--no-type-using-clipboard", action="store_true")
 parser.add_argument("--context-limit-chars", type=int, default=300)
 # add a command to be run on after model load
@@ -76,30 +75,30 @@ def get_text_remote(audio, context=None):
     return api_response.text
 
 
-def get_context():
-    # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
-    # fisrt clear the clipboard in case getting context fails
-    pyperclip.copy("")
-    # ctrl+shift+home
-    controller.press(pynput.keyboard.Key.ctrl_l)
-    controller.press(pynput.keyboard.Key.shift_l)
-    controller.press(pynput.keyboard.Key.home)
-    controller.release(pynput.keyboard.Key.home)
-    controller.release(pynput.keyboard.Key.shift_l)
-    controller.release(pynput.keyboard.Key.ctrl_l)
-    # ctrl+c
-    controller.press(pynput.keyboard.Key.ctrl_l)
-    controller.press("c")
-    controller.release("c")
-    controller.release(pynput.keyboard.Key.ctrl_l)
-    # right arrow
-    controller.press(pynput.keyboard.Key.right)
-    controller.release(pynput.keyboard.Key.right)
-    # get clipboard
-    clipboard = pyperclip.paste()
-    if clipboard == "":
-        print("Warning: context is empty")
-    return clipboard
+# def get_context():
+#     # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
+#     # fisrt clear the clipboard in case getting context fails
+#     pyperclip.copy("")
+#     # ctrl+shift+home
+#     controller.press(pynput.keyboard.Key.ctrl_l)
+#     controller.press(pynput.keyboard.Key.shift_l)
+#     controller.press(pynput.keyboard.Key.home)
+#     controller.release(pynput.keyboard.Key.home)
+#     controller.release(pynput.keyboard.Key.shift_l)
+#     controller.release(pynput.keyboard.Key.ctrl_l)
+#     # ctrl+c
+#     controller.press(pynput.keyboard.Key.ctrl_l)
+#     controller.press("c")
+#     controller.release("c")
+#     controller.release(pynput.keyboard.Key.ctrl_l)
+#     # right arrow
+#     controller.press(pynput.keyboard.Key.right)
+#     controller.release(pynput.keyboard.Key.right)
+#     # get clipboard
+#     clipboard = pyperclip.paste()
+#     if clipboard == "":
+#         print("Warning: context is empty")
+#     return clipboard
 
 
 def type_using_clipboard(text):
@@ -152,14 +151,12 @@ def record_and_process():
     # leave in only every 3rd sample, using numpy
     recorded_audio = recorded_audio[::3]
 
-    # ! get context
-    if not args.no_grab_context:
-        context = get_context()
-        # limit the length of context
-        context = context[-args.context_limit_chars :]
-    else:
-        context = None
-    # print(context)
+    # # ! get context
+    # if not args.no_grab_context:
+    #     context = get_context()
+    #     # limit the length of context
+    #     context = context[-args.context_limit_chars :]
+    context = None
 
     # ! transcribe
     if args.engine == "local":

@@ -7,28 +7,34 @@ import threading
 import time
 
 import numpy as np
-import pynput
 import pyperclip
 import requests
 import sounddevice as sd
 
 # from dictation import get_context, type_using_clipboard
 
+import evdev
+from evdev import UInput, ecodes as e
+from select import select
+
 # ! you can change this rec_key value
-rec_key = pynput.keyboard.Key.ctrl_r
+rec_key = "KEY_RIGHTCTRL"
 
 whisper_samplerate = 16000  # sampling rate that whisper uses
 recording_samplerate = 48000  # multiple of whisper_samplerate, widely supported
 
-server_url = 'http://0.0.0.0:5900'
+server_url = "http://0.0.0.0:5900"
 
-controller = pynput.keyboard.Controller()
+devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
+keyboards = [d for d in devices if rec_key in str(d.capabilities(verbose=True))]
+
+writer = UInput()
+time.sleep(1)
 
 # %% parse args
 parser = argparse.ArgumentParser()
 parser.add_argument("language", nargs="?", default=None)
-parser.add_argument("--no-grab-context", action="store_true")
-parser.add_argument("--no-type-using-clipboard", action="store_true")
+# parser.add_argument("--no-grab-context", action="store_true")
 parser.add_argument("--context-limit-chars", type=int, default=300)
 # add a command to be run on after model load
 parser.add_argument("--on-callback", type=str, default=None)
@@ -40,51 +46,47 @@ parser.add_argument("--auto-off-time", type=int, default=None)
 parser.add_argument("--model", type=str, default="large-v3")
 args = parser.parse_args()
 
-
-# start a server process
-engine = subprocess.Popen(["python", "engine.py", args.model])
-if args.on_callback is not None:
-    subprocess.run(args.on_callback, shell=True)
-
-
+# mock engine process
+engine = subprocess.Popen(["echo", "mock engine"])
 
 # %%
 
-def get_context():
-    # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
-    # fisrt clear the clipboard in case getting context fails
-    pyperclip.copy("")
-    # ctrl+shift+home
-    controller.press(pynput.keyboard.Key.ctrl_l)
-    controller.press(pynput.keyboard.Key.shift_l)
-    controller.press(pynput.keyboard.Key.home)
-    controller.release(pynput.keyboard.Key.home)
-    controller.release(pynput.keyboard.Key.shift_l)
-    controller.release(pynput.keyboard.Key.ctrl_l)
-    # ctrl+c
-    controller.press(pynput.keyboard.Key.ctrl_l)
-    controller.press("c")
-    controller.release("c")
-    controller.release(pynput.keyboard.Key.ctrl_l)
-    # right arrow
-    controller.press(pynput.keyboard.Key.right)
-    controller.release(pynput.keyboard.Key.right)
-    # get clipboard
-    clipboard = pyperclip.paste()
-    if clipboard == "":
-        print("Warning: context is empty")
-    return clipboard
+# def get_context():
+#     # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
+#     # fisrt clear the clipboard in case getting context fails
+#     pyperclip.copy("")
+#     # ctrl+shift+home
+#     controller.press(pynput.keyboard.Key.ctrl_l)
+#     controller.press(pynput.keyboard.Key.shift_l)
+#     controller.press(pynput.keyboard.Key.home)
+#     controller.release(pynput.keyboard.Key.home)
+#     controller.release(pynput.keyboard.Key.shift_l)
+#     controller.release(pynput.keyboard.Key.ctrl_l)
+#     # ctrl+c
+#     controller.press(pynput.keyboard.Key.ctrl_l)
+#     controller.press("c")
+#     controller.release("c")
+#     controller.release(pynput.keyboard.Key.ctrl_l)
+#     # right arrow
+#     controller.press(pynput.keyboard.Key.right)
+#     controller.release(pynput.keyboard.Key.right)
+#     # get clipboard
+#     clipboard = pyperclip.paste()
+#     if clipboard == "":
+#         print("Warning: context is empty")
+#     return clipboard
 
 
 def type_using_clipboard(text):
-    # use pynput to type ctrl+shift+v
     pyperclip.copy(text)
-    controller.press(pynput.keyboard.Key.ctrl_l)
-    controller.press(pynput.keyboard.Key.shift_l)
-    controller.press("v")
-    controller.release("v")
-    controller.release(pynput.keyboard.Key.shift_l)
-    controller.release(pynput.keyboard.Key.ctrl_l)
+    # use evdev to type ctrl+shift+v
+    writer.write(e.EV_KEY, e.KEY_LEFTCTRL, 1)
+    writer.write(e.EV_KEY, e.KEY_LEFTSHIFT, 1)
+    writer.write(e.EV_KEY, e.KEY_V, 1)
+    writer.write(e.EV_KEY, e.KEY_V, 0)
+    writer.write(e.EV_KEY, e.KEY_LEFTSHIFT, 0)
+    writer.write(e.EV_KEY, e.KEY_LEFTCTRL, 0)
+    writer.syn()
 
 
 # %%
@@ -136,21 +138,16 @@ def record_and_process():
     # leave in only every 3rd sample, using numpy
     recorded_audio = recorded_audio[::3]
 
-    # ! get context
-    if not args.no_grab_context:
-        context = get_context()
-        # limit the length of context
-        context = context[-args.context_limit_chars :]
-    else:
-        context = None
-    # print(context)
+    # # ! get context
+    # if not args.no_grab_context:
+    # context = get_context()
+    # # limit the length of context
+    # context = context[-args.context_limit_chars :]
+    context = None
 
-    # # ! transcribe
-    payload = {
-        "audio": recorded_audio.tolist(),
-        "context": context
-    }
-    
+    # ! transcribe
+    payload = {"audio": recorded_audio.tolist(), "context": context}
+
     # note that the server can be intializing, so have the post try until it works
     while True:
         try:
@@ -166,60 +163,55 @@ def record_and_process():
         text = response_data.get("text", "")
         print(text)
     else:
-        print(f"Error transcribing audio: {response_data.get('error', 'Unknown error')}")
+        print(
+            f"Error transcribing audio: {response_data.get('error', 'Unknown error')}"
+        )
+        return
 
     # ! type that text
     text = text + " "
-    if not args.no_type_using_clipboard:
-        type_using_clipboard(text)
-    else:
-        controller.type(text)
-        # subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text])
-        # note: ydotool on x11 correctly outputs polish chars and types in terminal
-
-
-def on_press(key):
-    global rec_key_pressed
-    # print("pressed", key)
-    if key == rec_key:
-        rec_key_pressed = True
-
-        # start recording in a new thread
-        t = threading.Thread(target=record_and_process)
-        t.start()
-
-
-def on_release(key):
-    global rec_key_pressed, time_last_used
-    # print("released", key)
-    if key == rec_key:
-        rec_key_pressed = False
-        time_last_used = time.time()
+    type_using_clipboard(text)
+    # print(text)
 
 
 # %%
-if args.language is not None:
-    print(f"Using language: {args.language}")
-with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-    print(f"Press {rec_key} to start recording")
-    try:
-        # listener.join()
-        while listener.is_alive():
-            if (
-                args.auto_off_time is not None
-                and time.time() - time_last_used > args.auto_off_time
-                and rec_key_pressed is False
-                and engine.poll() is None
-            ):
-                print("Auto off")
-                # shut down the server
-                engine.terminate()
 
-                if args.off_callback is not None:
-                    subprocess.run(args.off_callback, shell=True)
+# read any keypress
+try:
+    while True:
+        r, _, _ = select(keyboards, [], [], 1)
+        for event in (event for dev in r for event in dev.read()):
+            # check if rec_key
+            if event.code != evdev.ecodes.ecodes[rec_key]:
+                continue
+            if event.value == 1:
+                rec_key_pressed = True
+                # start recording in a new thread
+                t = threading.Thread(target=record_and_process)
+                t.start()
 
-            time.sleep(1)
-    except KeyboardInterrupt:
-        if args.off_callback is not None:
-            subprocess.run(args.off_callback, shell=True)
-        print("\nExiting...")
+            elif event.value == 0:
+                rec_key_pressed = False
+                time_last_used = time.time()
+
+        # check if we should shut down the engine
+        if (
+            engine.poll() is None
+            and args.auto_off_time is not None
+            and time.time() - time_last_used > args.auto_off_time
+            and rec_key_pressed is False
+        ):
+            print("Auto off")
+            # shut down the server
+            engine.terminate()
+
+            if args.off_callback is not None:
+                subprocess.run(args.off_callback, shell=True)
+
+except KeyboardInterrupt:
+    print("\nExiting...")
+    engine.terminate()
+    writer.close()
+
+    if args.off_callback is not None:
+        subprocess.run(args.off_callback, shell=True)

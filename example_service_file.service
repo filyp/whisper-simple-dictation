@@ -1,0 +1,10 @@
+[Unit]
+Description=Whisper Simple Dictation Service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /home/USERNAME/apps/whisper-simple-dictation/run_dictation_auto_off.sh en --on-callback 'echo 1 | sudo tee /sys/class/leds/platform::mute/brightness' --off-callback 'echo 0 | sudo tee /sys/class/leds/platform::mute/brightness' --auto-off-time 180 --model medium
+Restart=no
+
+[Install]
+WantedBy=default.target
