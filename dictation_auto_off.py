@@ -34,8 +34,6 @@ time.sleep(1)
 # %% parse args
 parser = argparse.ArgumentParser()
 parser.add_argument("language", nargs="?", default=None)
-# parser.add_argument("--no-grab-context", action="store_true")
-parser.add_argument("--context-limit-chars", type=int, default=300)
 # add a command to be run on after model load
 parser.add_argument("--on-callback", type=str, default=None)
 # add a command to be run on after model unload

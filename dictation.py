@@ -24,7 +24,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("engine", choices=["local", "remote"])
 parser.add_argument("language", nargs="?", default=None)
 parser.add_argument("--no-type-using-clipboard", action="store_true")
-parser.add_argument("--context-limit-chars", type=int, default=300)
 # add a command to be run on after model load
 parser.add_argument("--on-callback", type=str, default=None)
 # turn off automatically after some time
