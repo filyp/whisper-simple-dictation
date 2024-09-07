@@ -4,8 +4,18 @@ Description=Whisper Simple Dictation Service
 [Service]
 Type=simple
 Environment="WAYLAND_DISPLAY=wayland-0"
-ExecStart=/bin/bash /home/USERNAME/apps/whisper-simple-dictation/run_dictation_auto_off.sh en --on-callback 'echo 1 | sudo tee /sys/class/leds/platform::mute/brightness' --off-callback 'echo 0 | sudo tee /sys/class/leds/platform::mute/brightness' --auto-off-time 180 --model large-v3
+; the sudo tee ... command serves to indicate that the engine is running using some LED
+;     feel free to tweak it or remove it
+;     if you keep it, add this to the sudoers file:
+;     ALL ALL=NOPASSWD: /usr/bin/tee /sys/class/leds/platform\:\:mute/brightness
+ExecStart=/bin/bash /home/USERNAME/apps/whisper-simple-dictation/run_dictation_auto_off.sh en --on-callback 'echo 1 | sudo tee /sys/class/leds/platform::mute/brightness' --off-callback 'echo 0 | sudo tee /sys/class/leds/platform::mute/brightness' --auto-off-time 120 --model medium
 Restart=no
 
 [Install]
 WantedBy=default.target
+
+; alternative ExecStart, in case you don't want to add your user to the input group
+; but then, remember to add this rule to your sudoers file:
+; ALL ALL=(ALL) NOPASSWD: SETENV: /bin/bash /home/filip/apps/whisper-simple-dictation/run_dictation_auto_off.sh *
+; you will need to tweak --recording-device name - sd.query_devices() will list all available devices
+; ExecStart=/usr/bin/sudo -E /bin/bash /home/USERNAME/apps/whisper-simple-dictation/run_dictation_auto_off.sh en --on-callback 'echo 1 | sudo tee /sys/class/leds/platform::mute/brightness' --off-callback 'echo 0 | sudo tee /sys/class/leds/platform::mute/brightness' --auto-off-time 120 --model medium --recording-device "sof-hda-dsp: - (hw:1,6)"

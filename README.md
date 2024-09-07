@@ -31,6 +31,8 @@ Then log out and back in.
 
 The local version supports both Wayland and X11.
 
+(If you're using Wayland and don't want to add your user to the input group for security reasons, see instructions in `example_service_file.service`. On X11 it doesn't matter - devices are exposed anyway.)
+
 ### Remote
 Or if you want to run remotely, run:
 ```

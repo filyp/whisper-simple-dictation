@@ -42,7 +42,20 @@ parser.add_argument("--off-callback", type=str, default=None)
 parser.add_argument("--auto-off-time", type=int, default=None)
 # add a command to be run on after model load
 parser.add_argument("--model", type=str, default="large-v3")
+# name of the recording device to use as returned by sd.query_devices()
+parser.add_argument("--recording-device", type=str, default=None)
 args = parser.parse_args()
+
+if args.recording_device is None:
+    device_index = None
+else:
+    device_info = sd.query_devices()
+    device_index = None
+    for device in device_info:
+        if args.recording_device in device['name'] and device['max_input_channels'] > 0:
+            device_index = device["index"]
+            break
+    assert device_index is not None, "Couldn't find specified sound device"
 
 # mock engine process
 engine = subprocess.Popen(["echo", "mock engine"])
@@ -118,6 +131,7 @@ def record_and_process():
         channels=1,
         blocksize=256,
         callback=audio_callback,
+        device=device_index,
     )
     stream.start()
     while rec_key_pressed:
