@@ -4,6 +4,7 @@ Description=Whisper Simple Dictation Service
 [Service]
 Type=simple
 Environment="WAYLAND_DISPLAY=wayland-0"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
 ; the sudo tee ... command serves to indicate that the engine is running using some LED
 ;     feel free to tweak it or remove it
 ;     if you keep it, add this to the sudoers file:
@@ -14,6 +15,7 @@ Restart=no
 [Install]
 WantedBy=default.target
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; alternative ExecStart, in case you don't want to add your user to the input group
 ; but then, remember to add this rule to your sudoers file:
 ; ALL ALL=(ALL) NOPASSWD: SETENV: /bin/bash /home/filip/apps/whisper-simple-dictation/run_dictation_auto_off.sh *
