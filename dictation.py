@@ -32,6 +32,8 @@ parser.add_argument("--auto-off-time", type=int, default=None)
 parser.add_argument("--model", type=str, default="large-v3")
 args = parser.parse_args()
 
+command_words = ["engage", "kurde", "kurda"]
+
 # %% local or remote
 if args.engine == "local":
     from faster_whisper import WhisperModel
@@ -164,6 +166,14 @@ def record_and_process():
         text = get_text_remote(recorded_audio, context)
     print(text)
 
+    # ! check if it ends with a command word
+    words = text.split(" ")
+    use_command = False
+    if words and any(cmd_word in words[-1].lower() for cmd_word in command_words):
+        # last word was a command word
+        use_command = True
+        text = " ".join(words[:-1])
+
     # ! type that text
     text = text + " "
     if not args.no_type_using_clipboard:
@@ -172,6 +182,11 @@ def record_and_process():
         controller.type(text)
         # subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text])
         # note: ydotool on x11 correctly outputs polish chars and types in terminal
+
+    # ! use command
+    if use_command:
+        controller.press(pynput.keyboard.Key.enter)
+        controller.release(pynput.keyboard.Key.enter)
 
 
 def on_press(key):
@@ -201,7 +216,10 @@ with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as liste
     try:
         # listener.join()
         while listener.is_alive():
-            if args.auto_off_time is not None and time.time() - time_last_used > args.auto_off_time:
+            if (
+                args.auto_off_time is not None
+                and time.time() - time_last_used > args.auto_off_time
+            ):
                 print("Auto off")
                 break
             time.sleep(1)

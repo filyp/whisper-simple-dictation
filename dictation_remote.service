@@ -1,0 +1,12 @@
+[Unit]
+Description=Whisper Simple Dictation Service
+
+[Service]
+Environment="OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+WorkingDirectory=%h/apps/whisper-simple-dictation
+ExecStart=%h/apps/whisper-simple-dictation/venv/bin/python dictation.py remote en
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
