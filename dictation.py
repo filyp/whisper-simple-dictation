@@ -165,6 +165,11 @@ def record_and_process():
     elif args.engine == "remote":
         text = get_text_remote(recorded_audio, context)
     print(text)
+    
+    # ! check if triggered unintentionally (hack)
+    if text.strip(" .,").lower() in ["", "you"]:
+        print("You triggered unintentionally, skipping")
+        return
 
     # ! check if it ends with a command word
     words = text.split(" ")
