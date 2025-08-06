@@ -167,7 +167,7 @@ def record_and_process():
     print(text)
     
     # ! check if triggered unintentionally (hack)
-    if text.strip(" .,").lower() in ["", "you"]:
+    if text.strip(" .,!?").lower() in ["", "you", "bye", "thank you"]:
         print("You triggered unintentionally, skipping")
         return
 
