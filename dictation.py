@@ -32,7 +32,7 @@ parser.add_argument("--auto-off-time", type=int, default=None)
 parser.add_argument("--model", type=str, default="large-v3")
 args = parser.parse_args()
 
-command_words = ["engage", "kurde", "kurda"]
+command_words = ["engage", "kurde", "kurda", "command"]
 
 # %% local or remote
 if args.engine == "local":
@@ -171,13 +171,19 @@ def record_and_process():
         print("You triggered unintentionally, skipping")
         return
 
+    # # ! check if it ends with a command word
+    # words = text.split(" ")
+    # use_command = False
+    # if words and any(cmd_word in words[-1].lower() for cmd_word in command_words):
+    #     # last word was a command word
+    #     use_command = True
+    #     text = " ".join(words[:-1])
+
     # ! check if it ends with a command word
-    words = text.split(" ")
     use_command = False
-    if words and any(cmd_word in words[-1].lower() for cmd_word in command_words):
+    if any(cmd_word in text[-12:].lower() for cmd_word in command_words):
         # last word was a command word
         use_command = True
-        text = " ".join(words[:-1])
 
     # ! type that text
     text = text + " "
