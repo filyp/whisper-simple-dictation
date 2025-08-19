@@ -143,7 +143,7 @@ def record_and_process():
 
     # ! check if not too short
     duration = len(recorded_audio) / recording_samplerate
-    if duration <= 0.1:
+    if duration <= 0.2:
         print("Recording too short, skipping")
         return
 
@@ -165,9 +165,15 @@ def record_and_process():
     elif args.engine == "remote":
         text = get_text_remote(recorded_audio, context)
     print(text)
-    
+
     # ! check if triggered unintentionally (hack)
-    if text.strip(" .,!?").lower() in ["", "you", "bye", "thank you"]:
+    if text.strip(" .,!?").lower() in [
+        "",
+        "you",
+        "bye",
+        "thank you",
+        "thank you very much",
+    ]:
         print("You triggered unintentionally, skipping")
         return
 
