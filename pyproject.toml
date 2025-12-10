@@ -1,0 +1,14 @@
+[project]
+name = "whisper-simple-dictation-remote"
+version = "0.1.0"
+description = "Remote Whisper dictation with OpenAI API"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "openai",
+    "numpy",
+    "soundfile",
+    "pynput",
+    "sounddevice",
+    "pyperclip",
+]

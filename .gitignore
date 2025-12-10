@@ -5,3 +5,5 @@ junk
 .env
 tmp.wav
 __pycache__
+uv.lock
+uv_local.lock

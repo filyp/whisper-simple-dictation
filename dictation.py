@@ -30,6 +30,10 @@ parser.add_argument("--on-callback", type=str, default=None)
 parser.add_argument("--auto-off-time", type=int, default=None)
 # add a command to be run on after model load
 parser.add_argument("--model", type=str, default="large-v3")
+# use ydotool for typing (Wayland support)
+parser.add_argument("--use-ydotool", action="store_true")
+# ydotool socket path for Wayland
+parser.add_argument("--ydotool-socket", type=str, default="/tmp/.ydotool_socket")
 args = parser.parse_args()
 
 command_words = ["engage", "kurde", "kurda", "command"]
@@ -103,14 +107,21 @@ def get_text_remote(audio, context=None):
 
 
 def type_using_clipboard(text):
-    # use pynput to type ctrl+shift+v
-    pyperclip.copy(text)
-    controller.press(pynput.keyboard.Key.ctrl_l)
-    controller.press(pynput.keyboard.Key.shift_l)
-    controller.press("v")
-    controller.release("v")
-    controller.release(pynput.keyboard.Key.shift_l)
-    controller.release(pynput.keyboard.Key.ctrl_l)
+    if args.use_ydotool:
+        # Use ydotool for typing in Wayland
+        import os
+        env = os.environ.copy()
+        env['YDOTOOL_SOCKET'] = args.ydotool_socket
+        subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
+    else:
+        # use pynput to type ctrl+shift+v
+        pyperclip.copy(text)
+        controller.press(pynput.keyboard.Key.ctrl_l)
+        controller.press(pynput.keyboard.Key.shift_l)
+        controller.press("v")
+        controller.release("v")
+        controller.release(pynput.keyboard.Key.shift_l)
+        controller.release(pynput.keyboard.Key.ctrl_l)
 
 
 # %%
@@ -196,14 +207,24 @@ def record_and_process():
     if not args.no_type_using_clipboard:
         type_using_clipboard(text)
     else:
-        controller.type(text)
-        # subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text])
-        # note: ydotool on x11 correctly outputs polish chars and types in terminal
+        if args.use_ydotool:
+            import os
+            env = os.environ.copy()
+            env['YDOTOOL_SOCKET'] = args.ydotool_socket
+            subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
+        else:
+            controller.type(text)
 
     # ! use command
     if use_command:
-        controller.press(pynput.keyboard.Key.enter)
-        controller.release(pynput.keyboard.Key.enter)
+        if args.use_ydotool:
+            import os
+            env = os.environ.copy()
+            env['YDOTOOL_SOCKET'] = args.ydotool_socket
+            subprocess.run(["ydotool", "key", "28:1", "28:0"], env=env)  # 28 is Enter key
+        else:
+            controller.press(pynput.keyboard.Key.enter)
+            controller.release(pynput.keyboard.Key.enter)
 
 
 def on_press(key):
