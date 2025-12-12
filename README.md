@@ -21,7 +21,7 @@ python3 -m venv .venv --copies
 .venv/bin/pip install -e .
 ```
 
-If using Wayland, you also need to install ydotool and enable ydotoold. (The script tries to use ydotool, and if it's not installed, it falls back to pynput. Ydotool unfortunately does not support typing special characters.)
+If using Wayland, you also need to install ydotool and enable ydotoold. (The script tries to use ydotool, and if it's not installed, it falls back to pynput.)
 
 ### Remote
 If you want to run remotely, run:
@@ -58,9 +58,9 @@ Ctrl-c to stop.
 
 By default the record key is *right* ctrl. You can change it in `dictation.py`, but it must be a modifier key (shift, alt, ...).
 
-Note that the way we send text is by copying it to the clipboard and then sending Ctrl+Shift+V. That's because typing the text normally is complicated to do right, with all the special characters. 
+To set up a service that will run whisper-simple-dictation, take a look at `dictation_remote.service`.
 
-To set up a service that will run whisper-simple-dictation, take a look at `example_service_file.service`.
+(Note that the way we send text is by copying it to the clipboard and then sending Ctrl+Shift+V. That's because typing the text normally is complicated to do right, with all the special characters. If using ydotool, it types the text, because pasting is not implemented.)
 
 ## Options
 
