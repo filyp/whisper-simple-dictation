@@ -1,14 +1,30 @@
 [project]
-name = "whisper-simple-dictation-remote"
+name = "whisper-simple-dictation"
 version = "0.1.0"
-description = "Remote Whisper dictation with OpenAI API"
+description = "Whisper dictation with OpenAI API"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "openai",
     "numpy",
-    "soundfile",
+    # keyboard and sound support
     "pynput",
     "sounddevice",
+    # clipboard support
     "pyperclip",
+    # for remote:
+    "openai",
+    "soundfile",
 ]
+
+[project.optional-dependencies]
+local = [
+    "faster-whisper",
+    # for faster-whisper, requiring cuda 12
+    "nvidia-cublas-cu12",
+    "nvidia-cudnn-cu12~=8.9",
+    # "evdev",
+    # "flask",
+]
+
+[tool.setuptools]
+py-modules = ["dictation"]

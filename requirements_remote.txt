@@ -1,8 +1,0 @@
-openai
-numpy
-soundfile
-# keyboard and sound support
-pynput
-sounddevice
-# grab input box contents
-pyperclip

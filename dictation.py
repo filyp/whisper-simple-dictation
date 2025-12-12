@@ -1,10 +1,12 @@
 # %%
-# import os
+import os
 # os.environ['LD_LIBRARY_PATH'] = "/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cublas/lib:/home/filip/projects/whisper-rt/venv_faster/lib/python3.11/site-packages/nvidia/cudnn/lib"
 import argparse
+import shutil
 import subprocess
 import threading
 import time
+from pathlib import Path
 
 import numpy as np
 import pynput
@@ -30,13 +32,18 @@ parser.add_argument("--on-callback", type=str, default=None)
 parser.add_argument("--auto-off-time", type=int, default=None)
 # add a command to be run on after model load
 parser.add_argument("--model", type=str, default="large-v3")
-# use ydotool for typing (Wayland support)
-parser.add_argument("--use-ydotool", action="store_true")
 # ydotool socket path for Wayland
-parser.add_argument("--ydotool-socket", type=str, default="/tmp/.ydotool_socket")
+parser.add_argument("--ydotool-socket", type=str)
 args = parser.parse_args()
 
 command_words = ["engage", "kurde", "kurda", "command"]
+
+# check if ydotool is installed
+use_ydotool = shutil.which("ydotool") is not None
+# check if on wayland
+on_wayland = os.environ.get("WAYLAND_DISPLAY") is not None
+if on_wayland and not use_ydotool:
+    raise ValueError("On Wayland, ydotool is required. Please install it using your package manager.")
 
 # %% local or remote
 if args.engine == "local":
@@ -47,8 +54,9 @@ if args.engine == "local":
 elif args.engine == "remote":
     import soundfile
     from openai import OpenAI
-
-    client = OpenAI()
+    
+    openai_token = Path("~/.config/openai.token").expanduser().read_text().strip()
+    client = OpenAI(api_key=openai_token)
 else:
     raise ValueError("Specify whether to use local or remote engine")
 
@@ -80,38 +88,14 @@ def get_text_remote(audio, context=None):
     return api_response.text
 
 
-# def get_context():
-#     # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
-#     # fisrt clear the clipboard in case getting context fails
-#     pyperclip.copy("")
-#     # ctrl+shift+home
-#     controller.press(pynput.keyboard.Key.ctrl_l)
-#     controller.press(pynput.keyboard.Key.shift_l)
-#     controller.press(pynput.keyboard.Key.home)
-#     controller.release(pynput.keyboard.Key.home)
-#     controller.release(pynput.keyboard.Key.shift_l)
-#     controller.release(pynput.keyboard.Key.ctrl_l)
-#     # ctrl+c
-#     controller.press(pynput.keyboard.Key.ctrl_l)
-#     controller.press("c")
-#     controller.release("c")
-#     controller.release(pynput.keyboard.Key.ctrl_l)
-#     # right arrow
-#     controller.press(pynput.keyboard.Key.right)
-#     controller.release(pynput.keyboard.Key.right)
-#     # get clipboard
-#     clipboard = pyperclip.paste()
-#     if clipboard == "":
-#         print("Warning: context is empty")
-#     return clipboard
+env = os.environ.copy()
+if args.ydotool_socket is not None:
+    env['YDOTOOL_SOCKET'] = args.ydotool_socket
 
 
 def type_using_clipboard(text):
-    if args.use_ydotool:
+    if use_ydotool:
         # Use ydotool for typing in Wayland
-        import os
-        env = os.environ.copy()
-        env['YDOTOOL_SOCKET'] = args.ydotool_socket
         subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
     else:
         # use pynput to type ctrl+shift+v
@@ -207,20 +191,14 @@ def record_and_process():
     if not args.no_type_using_clipboard:
         type_using_clipboard(text)
     else:
-        if args.use_ydotool:
-            import os
-            env = os.environ.copy()
-            env['YDOTOOL_SOCKET'] = args.ydotool_socket
+        if use_ydotool:
             subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
         else:
             controller.type(text)
 
     # ! use command
     if use_command:
-        if args.use_ydotool:
-            import os
-            env = os.environ.copy()
-            env['YDOTOOL_SOCKET'] = args.ydotool_socket
+        if use_ydotool:
             subprocess.run(["ydotool", "key", "28:1", "28:0"], env=env)  # 28 is Enter key
         else:
             controller.press(pynput.keyboard.Key.enter)
@@ -264,6 +242,7 @@ with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as liste
     except KeyboardInterrupt:
         print("\nExiting...")
 
+
 # %% play around with getting window titles
 # # requires pip install python-xlib and I think xorg stuff
 # # on wayland it fails for many windows (f.e. terminal, dolphin)
@@ -276,3 +255,39 @@ with pynput.keyboard.Listener(on_press=on_press, on_release=on_release) as liste
 #     window_id = d.get_input_focus().focus.id
 #     window = d.create_resource_object("window", window_id)
 #     return window.get_wm_class()[0]
+
+
+# def get_context():
+#     # use pynput to type ctrl+shift+home, and then ctrl+c, and then right arrow
+#     # fisrt clear the clipboard in case getting context fails
+#     pyperclip.copy("")
+#     # ctrl+shift+home
+#     controller.press(pynput.keyboard.Key.ctrl_l)
+#     controller.press(pynput.keyboard.Key.shift_l)
+#     controller.press(pynput.keyboard.Key.home)
+#     controller.release(pynput.keyboard.Key.home)
+#     controller.release(pynput.keyboard.Key.shift_l)
+#     controller.release(pynput.keyboard.Key.ctrl_l)
+#     # ctrl+c
+#     controller.press(pynput.keyboard.Key.ctrl_l)
+#     controller.press("c")
+#     controller.release("c")
+#     controller.release(pynput.keyboard.Key.ctrl_l)
+#     # right arrow
+#     controller.press(pynput.keyboard.Key.right)
+#     controller.release(pynput.keyboard.Key.right)
+#     # get clipboard
+#     clipboard = pyperclip.paste()
+#     if clipboard == "":
+#         print("Warning: context is empty")
+#     return clipboard
+
+# - [ ] test if prompting works ok locally
+# - [ ] test if no lang actually increases latency/accuracy that much - it's useful to leave it blank
+
+
+# - grabbing context everywhere except some list of windows? - not very reliable, a lot of tinkering, platform specific, and not even that useful?
+#     - now only terminal doesn't work
+#     - in vscode, I just disabled C-S-Home; Now I can dictate, but context won't be grabbed. 
+# - incremenal transcription? but no moving window, just larger and larger windows. but that makes sense only with local, and even then it may be so slow that the lag is confusing. it also complicates a lot of things
+# - on wayland, pynput doesn't detect ctrl_r (or any other keypresses) when in terminal (tested on manjaro plasma)

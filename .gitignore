@@ -1,9 +1,9 @@
 .vscode
 venv
-
-junk
+.venv
 .env
-tmp.wav
 __pycache__
 uv.lock
 uv_local.lock
+tmp.wav
+whisper_simple_dictation.egg-info
