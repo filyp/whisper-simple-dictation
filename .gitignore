@@ -1,6 +1,7 @@
 .vscode
 venv
 .venv
+.venv_moshi
 .env
 __pycache__
 uv.lock

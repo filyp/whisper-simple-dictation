@@ -1,0 +1,3 @@
+moshi
+sounddevice
+pynput
