@@ -1,3 +1,27 @@
+# Moshi real-time local dictation
+
+Real-time streaming dictation using [Kyutai STT 1B](https://huggingface.co/kyutai/stt-1b-en_fr). Text is typed as you speak with 500ms delay.
+
+
+## Requirements
+- Python 3.10+
+- CUDA GPU
+- `xdotool` and `xclip` (on Arch/Manjaro: `sudo pacman -S xdotool xclip`) (for Wayland, you'd need to modify `moshi_dictation.py` to use `ydotool`)
+
+## Installation
+```
+git clone https://github.com/filyp/whisper-simple-dictation.git
+cd whisper-simple-dictation
+python3 -m venv .venv --copies
+.venv/bin/pip install moshi sounddevice pynput
+```
+
+## Running
+```
+.venv/bin/python moshi_dictation.py
+```
+Starts listening immediately. Press Scroll Lock to pause/resume. Ctrl+C to quit.
+
 # Whisper simple dictation
 
 - press a key to start recording
@@ -9,7 +33,7 @@ You can either run Whisper locally or through OpenAI's API.
 
 For local execution you need a CUDA device with at least 4GB VRAM. Uses whisper version `large-v3`, run with FasterWhisper.
 
-With remote execution, OpenAI's API has about 1 second delay (as of Jan 2024), while local is near instant.
+With remote execution, OpenAI's API has about 1 second delay (as of Jan 2024), while local is near instant. Note though, that compared to Moshi it isn't real-time - text will be typed only after you finish speaking and release the key.
 
 
 ## Installation

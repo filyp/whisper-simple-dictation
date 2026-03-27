@@ -21,12 +21,21 @@ HF_REPO = "kyutai/stt-1b-en_fr"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 TOGGLE_KEY = keyboard.Key.scroll_lock
 
-
 def type_text(text):
-    """Type text into focused window using xdotool."""
+    """Type text into focused window via clipboard paste."""
     if text:
+        # # using "xdotool type" avoids spamming the clipboard, but typing can be slower and not keep up with dictation
+        # subprocess.run(
+        #     ["xdotool", "type", "--clearmodifiers", "--delay", "0", text],
+        #     check=False,
+        # )
         subprocess.run(
-            ["xdotool", "type", "--clearmodifiers", "--delay", "0", text],
+            ["xclip", "-selection", "clipboard"],
+            input=text.encode(),
+            check=False,
+        )
+        subprocess.run(
+            ["xdotool", "key", "--clearmodifiers", "shift+Insert"],
             check=False,
         )
 
@@ -45,7 +54,7 @@ def main():
     frame_size = int(sample_rate / mimi.frame_rate)
 
     audio_q: queue.Queue[np.ndarray] = queue.Queue()
-    active = False
+    active = True
 
     def on_press(key):
         nonlocal active
