@@ -1,27 +1,3 @@
-# Moshi real-time local dictation
-
-Real-time streaming dictation using [Kyutai STT 1B](https://huggingface.co/kyutai/stt-1b-en_fr). Text is typed as you speak with 500ms delay.
-
-
-## Requirements
-- Python 3.10+
-- CUDA GPU
-- `xdotool` and `xclip` (on Arch/Manjaro: `sudo pacman -S xdotool xclip`) (for Wayland, you'd need to modify `moshi_dictation.py` to use `ydotool`)
-
-## Installation
-```
-git clone https://github.com/filyp/whisper-simple-dictation.git
-cd whisper-simple-dictation
-python3 -m venv .venv --copies
-.venv/bin/pip install moshi sounddevice pynput
-```
-
-## Running
-```
-.venv/bin/python moshi_dictation.py
-```
-Starts listening immediately. Press Scroll Lock to pause/resume. Ctrl+C to quit.
-
 # Whisper simple dictation
 
 - press a key to start recording
@@ -33,7 +9,9 @@ You can either run Whisper locally or through OpenAI's API.
 
 For local execution you need a CUDA device with at least 4GB VRAM. Uses whisper version `large-v3`, run with FasterWhisper.
 
-With remote execution, OpenAI's API has about 1 second delay (as of Jan 2024), while local is near instant. Note though, that compared to Moshi it isn't real-time - text will be typed only after you finish speaking and release the key.
+With remote execution on Groq API the transcription is near instant. Same for local execution. (On OpenAI's API it's much slower, at least 1 second.)
+
+Note that compared to Moshi (below) it isn't real-time - text will be typed only after you finish speaking and release the key.
 
 
 ## Installation
@@ -45,32 +23,36 @@ python3 -m venv .venv --copies
 .venv/bin/pip install -e .
 ```
 
-If using Wayland, you also need to install ydotool and enable ydotoold. (The script tries to use ydotool, and if it's not installed, it falls back to pynput.)
 
-### Remote
-If you want to run remotely, run:
+
+### Remote on Groq API
 ```
-echo sk-... > ~/.config/openai.token
+echo gsk-... > ~/.config/groq.token
 ```
-Where `sk-...` is your OpenAI API token.
+Where `gsk-...` is your Groq API token. It's also possible to run on OpenAI's API, but it's much slower than Groq and Groq has a generous free tier.
 
 ### Local
 Then, if you want to run locally, run:
 ```
 .venv/bin/pip install -e ".[local]"
+```
+
+### Additionally on Wayland
+```
 sudo usermod -aG input __YOUR_USER_NAME__
 ```
 
 Then log out and back in.
 
 (If you're using Wayland and don't want to add your user to the input group for security reasons, see instructions in `dictation_local.service`. On X11 it doesn't matter - devices are exposed anyway.)
+On Wayland you also need to install ydotool and enable ydotoold. (The script tries to use ydotool, and if it's not installed, it falls back to pynput.)
 
 
 ## Running
 
-To run remotely:
+To run remotely on Groq API:
 ```
-.venv/bin/python3 dictation.py remote en
+.venv/bin/python3 dictation.py groq en
 ```
 
 To run locally:
@@ -98,3 +80,27 @@ At first I wanted real-time dictation, similar to [nerd-dictation](https://githu
 With some clever engineering and a lot of compute maybe we could get that time lag to less than a second. But I found that reading what you said with a few hundred millisecond delay is very confusing, similar to hearing your voice delayed. So for now, I think the best and most reliable way is the one used here. This may change with future neural nets, with architecture other than whisper, aimed at real-time transcription.
 
 There's also [whisper-writer](https://github.com/savbell/whisper-writer), which is more mature, but doesn't (as of Jan 2024) have push-to-talk, which I find more pleasant to use.
+
+# Moshi real-time local dictation
+
+Real-time streaming dictation using [Kyutai STT 1B](https://huggingface.co/kyutai/stt-1b-en_fr). Text is typed as you speak with 500ms delay.
+
+
+## Requirements
+- Python 3.10+
+- CUDA GPU
+- `xdotool` and `xclip` (on Arch/Manjaro: `sudo pacman -S xdotool xclip`) (for Wayland, you'd need to modify `moshi_dictation.py` to use `ydotool`)
+
+## Installation
+```
+git clone https://github.com/filyp/whisper-simple-dictation.git
+cd whisper-simple-dictation
+python3 -m venv .venv --copies
+.venv/bin/pip install moshi sounddevice pynput
+```
+
+## Running
+```
+.venv/bin/python moshi_dictation.py
+```
+Starts listening immediately. Press Scroll Lock to pause/resume. Ctrl+C to quit.

@@ -14,6 +14,7 @@ dependencies = [
     # for remote:
     "openai",
     "soundfile",
+    "groq",
 ]
 
 [project.optional-dependencies]

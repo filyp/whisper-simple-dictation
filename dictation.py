@@ -23,7 +23,7 @@ controller = pynput.keyboard.Controller()
 
 # %% parse args
 parser = argparse.ArgumentParser()
-parser.add_argument("engine", choices=["local", "remote"])
+parser.add_argument("engine", choices=["local", "remote", "groq"], default="groq")
 parser.add_argument("language", nargs="?", default=None)
 parser.add_argument("--no-type-using-clipboard", action="store_true")
 # add a command to be run on after model load
@@ -57,6 +57,12 @@ elif args.engine == "remote":
     
     openai_token = Path("~/.config/openai.token").expanduser().read_text().strip()
     client = OpenAI(api_key=openai_token)
+elif args.engine == "groq":
+    import soundfile
+    from groq import Groq
+
+    groq_token = Path("~/.config/groq.token").expanduser().read_text().strip()
+    client = Groq(api_key=groq_token)
 else:
     raise ValueError("Specify whether to use local or remote engine")
 
@@ -85,6 +91,20 @@ def get_text_remote(audio, context=None):
         prompt=context,
     )
     # print(time.time())
+    return api_response.text
+
+
+def get_text_groq(audio, context=None):
+    tmp_audio_filename = "tmp.wav"
+    soundfile.write(tmp_audio_filename, audio, whisper_samplerate, format="wav")
+    with open(tmp_audio_filename, "rb") as file:
+        api_response = client.audio.transcriptions.create(
+            file=(tmp_audio_filename, file.read()),
+            model="whisper-large-v3",
+            temperature=0,
+            language=args.language,
+            prompt=context,
+        )
     return api_response.text
 
 
@@ -159,6 +179,8 @@ def record_and_process():
         text = get_text_local(recorded_audio, context)
     elif args.engine == "remote":
         text = get_text_remote(recorded_audio, context)
+    elif args.engine == "groq":
+        text = get_text_groq(recorded_audio, context)
     print(text)
 
     # ! check if triggered unintentionally (hack)
