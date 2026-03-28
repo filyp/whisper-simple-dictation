@@ -184,10 +184,12 @@ def record_and_process():
     if args.type_with == "none":
         return
 
+    if not on_wayland:
+        pynput_release_modifiers()
+
     # ! type that text
     text = text.strip() + " "
     if args.type_with == "ydotool":
-        # ydotool_release_modifiers()
         subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
     elif args.type_with == "pynput_type":
         controller.type(text)
@@ -205,7 +207,6 @@ def record_and_process():
 
     if args.press_enter:
         if args.type_with == "ydotool":
-            # ydotool_release_modifiers()
             subprocess.run(["ydotool", "key", "42:1", "28:1", "28:0", "42:0"], env=env)
         else:
             controller.press(pynput.keyboard.Key.shift_l)
@@ -256,6 +257,17 @@ def ydotool_release_modifiers():
         "126:0", # KEY_RIGHTMETA
     ]
     subprocess.run(["ydotool", "key"] + modifier_release, env=env)
+
+
+def pynput_release_modifiers():
+    controller.release(pynput.keyboard.Key.ctrl_l)
+    controller.release(pynput.keyboard.Key.ctrl_r)
+    controller.release(pynput.keyboard.Key.shift_l)
+    controller.release(pynput.keyboard.Key.shift_r)
+    controller.release(pynput.keyboard.Key.cmd_l)
+    controller.release(pynput.keyboard.Key.cmd_r)
+    controller.release(pynput.keyboard.Key.alt_l)
+    # no alt_r
 
 
 # %%
