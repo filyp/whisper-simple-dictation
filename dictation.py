@@ -27,6 +27,7 @@ parser.add_argument("engine", choices=["local", "remote", "groq"], default="groq
 parser.add_argument("language", nargs="?", default=None)
 parser.add_argument("--no-type-using-clipboard", action="store_true")
 parser.add_argument("--no-type", action="store_true", help="only print to terminal, don't type anything")
+parser.add_argument("--press-enter", action="store_true", help="press Shift+Enter after typing the text")
 # add a command to be run on after model load
 parser.add_argument("--on-callback", type=str, default=None)
 # turn off automatically after some time
@@ -202,11 +203,19 @@ def record_and_process():
     text = text + " "
     if not args.no_type_using_clipboard:
         type_using_clipboard(text)
+    elif use_ydotool:
+        subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
     else:
+        controller.type(text)
+
+    if args.press_enter:
         if use_ydotool:
-            subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
+            subprocess.run(["ydotool", "key", "42:1", "28:1", "28:0", "42:0"], env=env)
         else:
-            controller.type(text)
+            controller.press(pynput.keyboard.Key.shift_l)
+            controller.press(pynput.keyboard.Key.enter)
+            controller.release(pynput.keyboard.Key.enter)
+            controller.release(pynput.keyboard.Key.shift_l)
 
     # # ! check if it ends with a command word
     # if any(cmd_word in text[-12:].lower() for cmd_word in command_words):

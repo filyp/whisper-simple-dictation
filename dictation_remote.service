@@ -3,7 +3,7 @@ Description=Whisper Simple Dictation Service
 
 [Service]
 WorkingDirectory=%h/apps/whisper-simple-dictation
-ExecStart=%h/apps/whisper-simple-dictation/.venv/bin/python dictation.py groq en
+ExecStart=%h/apps/whisper-simple-dictation/.venv/bin/python dictation.py groq en --press-enter
 Restart=on-failure
 RestartSec=5
 
