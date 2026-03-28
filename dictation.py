@@ -26,6 +26,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("engine", choices=["local", "remote", "groq"], default="groq")
 parser.add_argument("language", nargs="?", default=None)
 parser.add_argument("--no-type-using-clipboard", action="store_true")
+parser.add_argument("--no-type", action="store_true", help="only print to terminal, don't type anything")
 # add a command to be run on after model load
 parser.add_argument("--on-callback", type=str, default=None)
 # turn off automatically after some time
@@ -36,7 +37,7 @@ parser.add_argument("--model", type=str, default="large-v3")
 parser.add_argument("--ydotool-socket", type=str)
 args = parser.parse_args()
 
-command_words = ["engage", "kurde", "kurda", "command"]
+# command_words = ["engage", "kurde", "kurda", "command"]
 
 # check if ydotool is installed
 use_ydotool = shutil.which("ydotool") is not None
@@ -194,19 +195,8 @@ def record_and_process():
         print("You triggered unintentionally, skipping")
         return
 
-    # # ! check if it ends with a command word
-    # words = text.split(" ")
-    # use_command = False
-    # if words and any(cmd_word in words[-1].lower() for cmd_word in command_words):
-    #     # last word was a command word
-    #     use_command = True
-    #     text = " ".join(words[:-1])
-
-    # ! check if it ends with a command word
-    use_command = False
-    if any(cmd_word in text[-12:].lower() for cmd_word in command_words):
-        # last word was a command word
-        use_command = True
+    if args.no_type:
+        return
 
     # ! type that text
     text = text + " "
@@ -218,13 +208,13 @@ def record_and_process():
         else:
             controller.type(text)
 
-    # ! use command
-    if use_command:
-        if use_ydotool:
-            subprocess.run(["ydotool", "key", "28:1", "28:0"], env=env)  # 28 is Enter key
-        else:
-            controller.press(pynput.keyboard.Key.enter)
-            controller.release(pynput.keyboard.Key.enter)
+    # # ! check if it ends with a command word
+    # if any(cmd_word in text[-12:].lower() for cmd_word in command_words):
+    #     if use_ydotool:
+    #         subprocess.run(["ydotool", "key", "28:1", "28:0"], env=env)  # 28 is Enter key
+    #     else:
+    #         controller.press(pynput.keyboard.Key.enter)
+    #         controller.release(pynput.keyboard.Key.enter)
 
 
 def on_press(key):

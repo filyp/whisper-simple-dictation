@@ -11,7 +11,7 @@ For local execution you need a CUDA device with at least 4GB VRAM. Uses whisper 
 
 With remote execution on Groq API the transcription is near instant. Same for local execution. (On OpenAI's API it's much slower, at least 1 second.)
 
-Note that compared to Moshi (below) it isn't real-time - text will be typed only after you finish speaking and release the key.
+Note that compared to Kyutai (below) it isn't real-time - text will be typed only after you finish speaking and release the key.
 
 
 ## Installation
@@ -81,7 +81,7 @@ With some clever engineering and a lot of compute maybe we could get that time l
 
 There's also [whisper-writer](https://github.com/savbell/whisper-writer), which is more mature, but doesn't (as of Jan 2024) have push-to-talk, which I find more pleasant to use.
 
-# Moshi real-time local dictation
+# Kyutai real-time local dictation
 
 Real-time streaming dictation using [Kyutai STT 1B](https://huggingface.co/kyutai/stt-1b-en_fr). Text is typed as you speak with 500ms delay.
 
@@ -89,7 +89,7 @@ Real-time streaming dictation using [Kyutai STT 1B](https://huggingface.co/kyuta
 ## Requirements
 - Python 3.10+
 - CUDA GPU
-- `xdotool` and `xclip` (on Arch/Manjaro: `sudo pacman -S xdotool xclip`) (for Wayland, you'd need to modify `moshi_dictation.py` to use `ydotool`)
+- `xdotool` and `xclip` (on Arch/Manjaro: `sudo pacman -S xdotool xclip`) (for Wayland, you'd need to modify `kyutai_dictation.py` to use `ydotool`)
 
 ## Installation
 ```
@@ -101,6 +101,6 @@ python3 -m venv .venv --copies
 
 ## Running
 ```
-.venv/bin/python moshi_dictation.py
+.venv/bin/python kyutai_dictation.py
 ```
 Starts listening immediately. Press Scroll Lock to pause/resume. Ctrl+C to quit.
