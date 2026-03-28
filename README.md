@@ -66,8 +66,6 @@ By default the record key is *right* ctrl. You can change it in `dictation.py`, 
 
 To set up a service that will run whisper-simple-dictation, take a look at `dictation_remote.service`.
 
-(Note that the way we send text is by copying it to the clipboard and then sending Ctrl+Shift+V. That's because typing the text normally is complicated to do right, with all the special characters. If using ydotool, it types the text, because pasting is not implemented.)
-
 ## Options
 
 - **Language.** First argument (in the example above `en`), sets the language. You can also not pass any language to detect it automatically, but that can have worse latency and accuracy.

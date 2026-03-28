@@ -23,10 +23,9 @@ controller = pynput.keyboard.Controller()
 
 # %% parse args
 parser = argparse.ArgumentParser()
-parser.add_argument("engine", choices=["local", "remote", "groq"], default="groq")
+parser.add_argument("engine", choices=["local", "groq"], default="groq")
 parser.add_argument("language", nargs="?", default=None)
-parser.add_argument("--no-type-using-clipboard", action="store_true")
-parser.add_argument("--no-type", action="store_true", help="only print to terminal, don't type anything")
+parser.add_argument("--type-with", choices=["ydotool", "pynput_type", "pynput_clipboard", "none"], default="ydotool")
 parser.add_argument("--press-enter", action="store_true", help="press Shift+Enter after typing the text")
 # add a command to be run on after model load
 parser.add_argument("--on-callback", type=str, default=None)
@@ -40,12 +39,13 @@ args = parser.parse_args()
 
 # command_words = ["engage", "kurde", "kurda", "command"]
 
-# check if ydotool is installed
-use_ydotool = shutil.which("ydotool") is not None
-# check if on wayland
+ydotool_installed = shutil.which("ydotool") is not None
 on_wayland = os.environ.get("WAYLAND_DISPLAY") is not None
-if on_wayland and not use_ydotool:
-    raise ValueError("On Wayland, ydotool is required. Please install it using your package manager.")
+if on_wayland:
+    assert ydotool_installed, "On Wayland, ydotool is required. Please install it using your package manager."
+if not ydotool_installed:
+    print("ydotool not installed, falling back to pynput")
+    args.type_with = "pynput_type"
 
 # %% local or remote
 if args.engine == "local":
@@ -53,12 +53,12 @@ if args.engine == "local":
 
     model = WhisperModel(args.model, device="cuda", compute_type="float16")
     # int8 is said to have worse accuracy and be slower
-elif args.engine == "remote":
-    import soundfile
-    from openai import OpenAI
+# elif args.engine == "remote":
+#     import soundfile
+#     from openai import OpenAI
     
-    openai_token = Path("~/.config/openai.token").expanduser().read_text().strip()
-    client = OpenAI(api_key=openai_token)
+#     openai_token = Path("~/.config/openai.token").expanduser().read_text().strip()
+#     client = OpenAI(api_key=openai_token)
 elif args.engine == "groq":
     import soundfile
     from groq import Groq
@@ -66,7 +66,7 @@ elif args.engine == "groq":
     groq_token = Path("~/.config/groq.token").expanduser().read_text().strip()
     client = Groq(api_key=groq_token)
 else:
-    raise ValueError("Specify whether to use local or remote engine")
+    raise ValueError("Specify whether to use local or groq engine")
 
 if args.on_callback is not None:
     subprocess.run(args.on_callback, shell=True)
@@ -82,18 +82,18 @@ def get_text_local(audio, context=None):
     return text
 
 
-def get_text_remote(audio, context=None):
-    tmp_audio_filename = "tmp.wav"
-    soundfile.write(tmp_audio_filename, audio, whisper_samplerate, format="wav")
-    # print(time.time())
-    api_response = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=open(tmp_audio_filename, "rb"),
-        language=args.language,
-        prompt=context,
-    )
-    # print(time.time())
-    return api_response.text
+# def get_text_remote(audio, context=None):
+#     tmp_audio_filename = "tmp.wav"
+#     soundfile.write(tmp_audio_filename, audio, whisper_samplerate, format="wav")
+#     # print(time.time())
+#     api_response = client.audio.transcriptions.create(
+#         model="whisper-1",
+#         file=open(tmp_audio_filename, "rb"),
+#         language=args.language,
+#         prompt=context,
+#     )
+#     # print(time.time())
+#     return api_response.text
 
 
 def get_text_groq(audio, context=None):
@@ -113,21 +113,6 @@ def get_text_groq(audio, context=None):
 env = os.environ.copy()
 if args.ydotool_socket is not None:
     env['YDOTOOL_SOCKET'] = args.ydotool_socket
-
-
-def type_using_clipboard(text):
-    if use_ydotool:
-        # Use ydotool for typing in Wayland
-        subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
-    else:
-        # use pynput to type ctrl+shift+v
-        pyperclip.copy(text)
-        controller.press(pynput.keyboard.Key.ctrl_l)
-        controller.press(pynput.keyboard.Key.shift_l)
-        controller.press("v")
-        controller.release("v")
-        controller.release(pynput.keyboard.Key.shift_l)
-        controller.release(pynput.keyboard.Key.ctrl_l)
 
 
 # %%
@@ -179,8 +164,8 @@ def record_and_process():
     # ! transcribe
     if args.engine == "local":
         text = get_text_local(recorded_audio, context)
-    elif args.engine == "remote":
-        text = get_text_remote(recorded_audio, context)
+    # elif args.engine == "remote":
+    #     text = get_text_remote(recorded_audio, context)
     elif args.engine == "groq":
         text = get_text_groq(recorded_audio, context)
     print(text)
@@ -196,20 +181,31 @@ def record_and_process():
         print("You triggered unintentionally, skipping")
         return
 
-    if args.no_type:
+    if args.type_with == "none":
         return
 
     # ! type that text
-    text = text + " "
-    if not args.no_type_using_clipboard:
-        type_using_clipboard(text)
-    elif use_ydotool:
+    text = text.strip() + " "
+    if args.type_with == "ydotool":
+        # ydotool_release_modifiers()
         subprocess.run(["ydotool", "type", "--key-delay=0", "--key-hold=0", text], env=env)
-    else:
+    elif args.type_with == "pynput_type":
         controller.type(text)
+    elif args.type_with == "pynput_clipboard":
+        # use pynput to type ctrl+shift+v
+        pyperclip.copy(text)
+        controller.press(pynput.keyboard.Key.ctrl_l)
+        controller.press(pynput.keyboard.Key.shift_l)
+        controller.press("v")
+        controller.release("v")
+        controller.release(pynput.keyboard.Key.shift_l)
+        controller.release(pynput.keyboard.Key.ctrl_l)
+    else:
+        raise ValueError(f"Invalid type_with: {args.type_with}")
 
     if args.press_enter:
-        if use_ydotool:
+        if args.type_with == "ydotool":
+            # ydotool_release_modifiers()
             subprocess.run(["ydotool", "key", "42:1", "28:1", "28:0", "42:0"], env=env)
         else:
             controller.press(pynput.keyboard.Key.shift_l)
@@ -243,6 +239,23 @@ def on_release(key):
     if key == rec_key:
         rec_key_pressed = False
         time_last_used = time.time()
+
+def ydotool_release_modifiers():
+    # Release all common modifier keys before typing so held keys
+    # (e.g. the rec_key) don't interfere with ydotool output.
+    # ydotool key format: <keycode>:<0=up, 1=down>
+    # Note that this may fail for right modifiers like right ctrl, but let's try anyway.
+    modifier_release = [
+        "29:0",  # KEY_LEFTCTRL
+        "97:0",  # KEY_RIGHTCTRL
+        "42:0",  # KEY_LEFTSHIFT
+        "54:0",  # KEY_RIGHTSHIFT
+        "56:0",  # KEY_LEFTALT
+        "100:0", # KEY_RIGHTALT
+        "125:0", # KEY_LEFTMETA
+        "126:0", # KEY_RIGHTMETA
+    ]
+    subprocess.run(["ydotool", "key"] + modifier_release, env=env)
 
 
 # %%
