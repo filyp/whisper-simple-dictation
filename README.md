@@ -5,13 +5,13 @@
 - Whisper transcribes it
 - the text is typed with simulated keypresses
 
-You can either run Whisper locally or through OpenAI's API.
+You can either run Whisper locally or through Groq's API.
 
 For local execution you need a CUDA device with at least 4GB VRAM. Uses whisper version `large-v3`, run with FasterWhisper.
 
 With remote execution on Groq API the transcription is near instant. Same for local execution. (On OpenAI's API it's much slower, at least 1 second.)
 
-Note that compared to Kyutai (below) it isn't real-time - text will be typed only after you finish speaking and release the key.
+Note that compared to Kyutai (described later) it isn't real-time - text will be typed only after you finish speaking and release the key, but the accuracy is higher and overall I found Whisper more usable.
 
 
 ## Installation
@@ -23,16 +23,15 @@ python3 -m venv .venv --copies
 .venv/bin/pip install -e .
 ```
 
-
+Then, depending on whether you want to run locally or remotely, do one of the following:
 
 ### Remote on Groq API
 ```
 echo gsk-... > ~/.config/groq.token
 ```
-Where `gsk-...` is your Groq API token. It's also possible to run on OpenAI's API, but it's much slower than Groq and Groq has a generous free tier.
+Where `gsk-...` is your Groq API token. (It's also possible to run on OpenAI's API, but it's much slower and Groq has a generous free tier.)
 
 ### Local
-Then, if you want to run locally, run:
 ```
 .venv/bin/pip install -e ".[local]"
 ```
@@ -44,7 +43,7 @@ sudo usermod -aG input __YOUR_USER_NAME__
 
 Then log out and back in.
 
-(If you're using Wayland and don't want to add your user to the input group for security reasons, see instructions in `dictation_local.service`. On X11 it doesn't matter - devices are exposed anyway.)
+(If you're using Wayland and don't want to add your user to the input group for security reasons, see instructions in `legacy_auto_off/dictation_local.service`. On X11 it doesn't matter - devices are exposed anyway.)
 On Wayland you also need to install ydotool and enable ydotoold. (The script tries to use ydotool, and if it's not installed, it falls back to pynput.)
 
 
