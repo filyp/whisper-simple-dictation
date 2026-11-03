@@ -25,7 +25,7 @@ controller = pynput.keyboard.Controller()
 parser = argparse.ArgumentParser()
 parser.add_argument("engine", choices=["local", "groq"], default="groq")
 parser.add_argument("language", nargs="?", default=None)
-parser.add_argument("--type-with", choices=["ydotool", "pynput_type", "pynput_clipboard", "none"], default="ydotool")
+parser.add_argument("--type-with", choices=["ydotool", "pynput_type", "pynput_clipboard", "ydotool_clipboard", "none"], default="ydotool_clipboard")
 parser.add_argument("--press-enter", action="store_true", help="press Shift+Enter after typing the text")
 # add a command to be run on after model load
 parser.add_argument("--on-callback", type=str, default=None)
@@ -184,8 +184,10 @@ def record_and_process():
     if args.type_with == "none":
         return
 
-    if not on_wayland:
-        pynput_release_modifiers()
+    if on_wayland:
+       ydotool_release_modifiers()
+    else:
+       pynput_release_modifiers()
 
     # ! type that text
     text = text.strip() + " "
@@ -202,11 +204,16 @@ def record_and_process():
         controller.release("v")
         controller.release(pynput.keyboard.Key.shift_l)
         controller.release(pynput.keyboard.Key.ctrl_l)
+    elif args.type_with == "ydotool_clipboard":
+       subprocess.run(["wl-copy", "--", text])
+       time.sleep(0.05)
+       # Ctrl+Shift+V: 29=LCtrl, 42=LShift, 47=V
+       subprocess.run(["ydotool", "key", "29:1", "42:1", "47:1", "47:0", "42:0", "29:0"], env=env)
     else:
         raise ValueError(f"Invalid type_with: {args.type_with}")
 
     if args.press_enter:
-        if args.type_with == "ydotool":
+        if args.type_with.startswith("ydotool"):
             subprocess.run(["ydotool", "key", "42:1", "28:1", "28:0", "42:0"], env=env)
         else:
             controller.press(pynput.keyboard.Key.shift_l)
